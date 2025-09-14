@@ -13,14 +13,7 @@ BURST = int(os.getenv("DOMAIN_CHECK_BURST", "5"))
 RETRY_BACKOFF = [0.5, 1.0, 2.0]
 CACHE_PATH = os.getenv("DOMAIN_CACHE_PATH", "domain_cache.sqlite3")
 
-NAMECOM_API_USERNAME = os.getenv("NAME_COM_USERNAME") or os.getenv("name_com_DEV_USERNAME")
-NAMECOM_API_TOKEN = os.getenv("NAME_COM_API_KEY") or os.getenv("name_com_DEV_API_KEY")
-NAMECOM_BASE = os.getenv("NAME_COM_BASE", "https://api.dev.name.com/v4")
-
-DOMAINR_API_KEY = os.getenv("DOMAINR_API_KEY")
 DOMAINR_BASE = "https://api.domainr.com/v2/status"
-
-WHOISXML_API_KEY = os.getenv("WHOISXML_API_KEY")
 
 from ..storage.cache import DomainCache
 from ..models import DomainCheckResult
@@ -57,6 +50,9 @@ bucket = TokenBucket(RATE_LIMIT_RPS, BURST)
 
 
 async def _fetch_namecom(domain: str) -> ProviderResponse:
+    NAMECOM_API_USERNAME = os.getenv("NAME_COM_USERNAME") or os.getenv("name_com_DEV_USERNAME")
+    NAMECOM_API_TOKEN = os.getenv("NAME_COM_API_KEY") or os.getenv("name_com_DEV_API_KEY")
+    NAMECOM_BASE = os.getenv("NAME_COM_BASE", "https://api.dev.name.com/v4")
     if not (NAMECOM_API_USERNAME and NAMECOM_API_TOKEN):
         return ProviderResponse(None, None, "stub", "missing_namecom_keys")
     url = f"{NAMECOM_BASE}/domains:checkAvailability"
@@ -85,6 +81,7 @@ async def _fetch_namecom(domain: str) -> ProviderResponse:
 
 
 async def _fetch_domainr(domain: str) -> ProviderResponse:
+    DOMAINR_API_KEY = os.getenv("DOMAINR_API_KEY")
     if not DOMAINR_API_KEY:
         return ProviderResponse(None, None, "stub", "missing_domainr_key")
     params = {"domain": domain, "key": DOMAINR_API_KEY}
@@ -110,6 +107,7 @@ async def _fetch_domainr(domain: str) -> ProviderResponse:
 async def _fetch_whoisxml(domain: str) -> ProviderResponse:
     # WhoisXML offers complex suite; we will not call availability here to avoid quota burn by default.
     # Return stub unless explicitly enabled via env var.
+    WHOISXML_API_KEY = os.getenv("WHOISXML_API_KEY")
     if not WHOISXML_API_KEY or os.getenv("USE_WHOISXML_FOR_AVAIL", "0") != "1":
         return ProviderResponse(None, None, "stub", "whoisxml_disabled")
     return ProviderResponse(None, None, "whoisxml", "not_implemented")

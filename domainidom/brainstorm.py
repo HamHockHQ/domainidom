@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from typing import List
+import re
 
 import httpx
 
@@ -15,6 +16,18 @@ def _get_llm_base_url() -> str | None:
 def _get_llm_api_key() -> str | None:
     # For LM Studio local, most endpoints accept empty or dummy key
     return os.getenv("OPENAI_API_KEY", "lm-studio")
+
+
+def _clean_name(s: str) -> str:
+    s = s.strip()
+    s = re.sub(r"^```[a-zA-Z]*\s*|```$", "", s)
+    s = s.strip().strip('"\' ,')
+    s = re.sub(r"^[-*\d\.\)\]]+\s*", "", s)
+    s = s.strip()
+    # Drop list bracket artifacts
+    if s in {"[", "]", "[", "]", "{" , "}"}:
+        return ""
+    return s
 
 
 def brainstorm_names(idea: str, max_candidates: int = DEFAULT_MAX) -> List[str]:
@@ -60,12 +73,12 @@ def brainstorm_names(idea: str, max_candidates: int = DEFAULT_MAX) -> List[str]:
         try:
             import json
 
-            names = [str(x).strip() for x in json.loads(content) if str(x).strip()]
+            names = [str(x) for x in json.loads(content)]
         except Exception:
             pass
     if not names:
         for line in content.splitlines():
-            line = line.strip("- *\t ")
+            line = _clean_name(line)
             if line:
                 names.append(line)
 
@@ -73,6 +86,9 @@ def brainstorm_names(idea: str, max_candidates: int = DEFAULT_MAX) -> List[str]:
     seen = set()
     uniq = []
     for n in names:
+        n = _clean_name(n)
+        if not n:
+            continue
         low = n.lower()
         if low not in seen:
             seen.add(low)
