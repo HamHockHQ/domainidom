@@ -1,0 +1,49 @@
+Metadata-Version: 2.4
+Name: domainidom
+Version: 0.1.0
+Summary: Domain and brand name ideation, availability research, and packaging
+Author-email: HamHockHQ <howardmd1@gmail.com>
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: fastapi~=0.115
+Requires-Dist: uvicorn[standard]~=0.30
+Requires-Dist: typer[all]~=0.12
+Requires-Dist: pydantic~=2.8
+Requires-Dist: httpx~=0.27
+Requires-Dist: python-dotenv~=1.0
+Requires-Dist: metaphone~=0.6
+Requires-Dist: python-Levenshtein~=0.25
+Provides-Extra: dev
+Requires-Dist: pytest~=8.3; extra == "dev"
+Requires-Dist: black~=24.10; extra == "dev"
+Requires-Dist: ruff~=0.6; extra == "dev"
+
+# domainidom
+
+Domain and brand name ideation, availability research, and packaging.
+
+## Quick start (Windows PowerShell)
+
+```powershell
+python -m venv .venv; .\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -e .[dev]
+```
+
+Run API:
+
+```powershell
+uvicorn domainidom.api:app --reload
+```
+
+Run CLI:
+
+```powershell
+python -m domainidom.cli brainstorm --idea "AI travel planner for families" --tlds com io ai
+```
+
+Run tests:
+
+```powershell
+pytest -q
+```

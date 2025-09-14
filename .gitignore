@@ -1,1 +1,16 @@
-DOMAIN_AGENCY_SWARM.md
+/.venv/
+/.pytest_cache/
+/__pycache__/
+/.ruff_cache/
+/.mypy_cache/
+/.DS_Store
+/.env.*
+/.env
+/dist/
+/build/
+/reports/
+*.pyc
+*.pyo
+*.pyd
+.gitignore
+PROJECT_INFO_API_AND_MORE.md
