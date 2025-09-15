@@ -119,14 +119,16 @@ pytest -q
 ## Current Status (September 2025)
 
 **✅ MVP (v0.1) COMPLETED**
+
 - Full Python project scaffold with `pyproject.toml`, dependencies, tests
 - Complete package structure: `api.py`, `cli.py`, `brainstorm.py`, `research.py`, `analyze.py`, `package.py`, `models.py`
 - Services: `domain_check.py` (Name.com, Domainr), `pricing.py`, caching layer
 - Utils: `phonetics.py` (Double Metaphone), scoring algorithms  
 - Tests: Comprehensive coverage, all passing (`pytest -q`)
-- GitHub repository: https://github.com/HamHockHQ/domainidom
+- GitHub repository: <https://github.com/HamHockHQ/domainidom>
 
 **✅ Validation Checklist**
+
 - `pytest -q` passes ✅
 - `uvicorn domainidom.api:app --reload` starts and serves `/healthz` ✅
 - CLI commands work: `python -m domainidom.cli brainstorm` ✅
@@ -158,6 +160,7 @@ pytest -q
    - Dependencies: Issues #1 (MCP integration provides foundation)
 
 **Recommended Assignment Order:**
+
 - Issues #2 + #4 in parallel (independent)
 - Issue #1 after #2/#4 complete  
 - Issue #3 last (depends on #1 for optimal agent coordination)

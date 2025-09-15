@@ -19,7 +19,9 @@ app = typer.Typer(add_completion=False)
 @app.command()
 def brainstorm(
     idea: str = typer.Option(..., help="Business idea overview"),
-    tlds: List[str] = typer.Option(["com", "io", "ai"], "--tld", "-t", help="Repeatable TLDs to consider"),
+    tlds: List[str] = typer.Option(
+        ["com", "io", "ai"], "--tld", "-t", help="Repeatable TLDs to consider"
+    ),
     max_candidates: int = typer.Option(50, help="Max number of names to generate"),
     out: Optional[Path] = typer.Option(None, help="Output JSON path (optional)"),
 ):
@@ -33,9 +35,13 @@ def brainstorm(
 @app.command()
 def research(
     idea_file: Path = typer.Option(..., exists=True, file_okay=True, dir_okay=False),
-    tlds: List[str] = typer.Option(["com", "io", "ai"], "--tld", "-t", help="Repeatable TLDs to consider"),
+    tlds: List[str] = typer.Option(
+        ["com", "io", "ai"], "--tld", "-t", help="Repeatable TLDs to consider"
+    ),
     max: int = typer.Option(50, help="Max candidates"),
-    out: Optional[Path] = typer.Option(None, help="Output report path (JSON if endswith .json else CSV)"),
+    out: Optional[Path] = typer.Option(
+        None, help="Output report path (JSON if endswith .json else CSV)"
+    ),
 ):
     idea = idea_file.read_text(encoding="utf-8").strip()
     names = brainstorm_names(idea=idea, max_candidates=max)

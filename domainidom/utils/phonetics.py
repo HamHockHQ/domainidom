@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from typing import Tuple
 
 from metaphone import doublemetaphone
 
@@ -19,10 +18,10 @@ def phonetic_similarity(a: str, b: str) -> float:
 def vowel_consonant_balance(s: str) -> float:
     if not s:
         return 0.0
-    s2 = ''.join(ch.lower() for ch in s if ch.isalpha())
+    s2 = "".join(ch.lower() for ch in s if ch.isalpha())
     if not s2:
         return 0.0
-    vowels = sum(1 for ch in s2 if ch in 'aeiou')
+    vowels = sum(1 for ch in s2 if ch in "aeiou")
     cons = max(1, len(s2) - vowels)
     ratio = vowels / cons
     # Ideal ratio ~ 0.6–1.4; map to 0..1

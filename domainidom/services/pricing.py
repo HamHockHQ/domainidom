@@ -17,7 +17,9 @@ async def get_namecom_price(domain: str) -> Optional[float]:
     payload = {"domainNames": [domain]}
     try:
         async with httpx.AsyncClient(timeout=10) as client:
-            resp = await client.post(url, json=payload, auth=(NAMECOM_API_USERNAME, NAMECOM_API_TOKEN))
+            resp = await client.post(
+                url, json=payload, auth=(NAMECOM_API_USERNAME, NAMECOM_API_TOKEN)
+            )
             resp.raise_for_status()
             data = resp.json()
             item = data.get("results", [{}])[0]

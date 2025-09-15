@@ -1,5 +1,3 @@
-import os
-
 from domainidom.storage.cache import DomainCache
 from domainidom.services.domain_check import check_domains
 

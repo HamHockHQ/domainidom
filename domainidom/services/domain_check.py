@@ -4,9 +4,12 @@ import asyncio
 import os
 import time
 from dataclasses import dataclass
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple
 
 import httpx
+
+from ..storage.cache import DomainCache
+from ..models import DomainCheckResult
 
 RATE_LIMIT_RPS = float(os.getenv("DOMAIN_CHECK_RPS", "3"))
 BURST = int(os.getenv("DOMAIN_CHECK_BURST", "5"))
@@ -14,9 +17,6 @@ RETRY_BACKOFF = [0.5, 1.0, 2.0]
 CACHE_PATH = os.getenv("DOMAIN_CACHE_PATH", "domain_cache.sqlite3")
 
 DOMAINR_BASE = "https://api.domainr.com/v2/status"
-
-from ..storage.cache import DomainCache
-from ..models import DomainCheckResult
 
 
 @dataclass
@@ -57,14 +57,15 @@ async def _fetch_namecom(domain: str) -> ProviderResponse:
         return ProviderResponse(None, None, "stub", "missing_namecom_keys")
     url = f"{NAMECOM_BASE}/domains:checkAvailability"
     payload = {"domainNames": [domain]}
-    headers = {"Authorization": f"Basic {NAMECOM_API_TOKEN}", "Content-Type": "application/json"}
     for backoff in [0] + RETRY_BACKOFF:
         try:
             if backoff:
                 await asyncio.sleep(backoff)
             async with httpx.AsyncClient(timeout=10) as client:
                 await bucket.acquire()
-                resp = await client.post(url, json=payload, auth=(NAMECOM_API_USERNAME, NAMECOM_API_TOKEN))
+                resp = await client.post(
+                    url, json=payload, auth=(NAMECOM_API_USERNAME, NAMECOM_API_TOKEN)
+                )
                 resp.raise_for_status()
                 data = resp.json()
                 # Name.com returns array of check results; use first
@@ -74,8 +75,7 @@ async def _fetch_namecom(domain: str) -> ProviderResponse:
                 if "purchasePrice" in item and isinstance(item["purchasePrice"], dict):
                     price = float(item["purchasePrice"].get("amount", 0))
                 return ProviderResponse(available, price, "name.com")
-        except Exception as e:
-            err = str(e)
+        except Exception:
             continue
     return ProviderResponse(None, None, "name.com", "request_failed")
 
@@ -124,7 +124,9 @@ async def _fetch_best(domain: str) -> ProviderResponse:
     return ProviderResponse(None, None, "stub", "no_provider")
 
 
-def check_domains(domain_candidates: Dict[str, List[str]]) -> Dict[str, List[Tuple[str, DomainCheckResult]]]:
+def check_domains(
+    domain_candidates: Dict[str, List[str]]
+) -> Dict[str, List[Tuple[str, DomainCheckResult]]]:
     cache_path = os.getenv("DOMAIN_CACHE_PATH", "domain_cache.sqlite3")
     cache = DomainCache(cache_path)
     max_calls_total = int(os.getenv("DOMAIN_CHECK_MAX_CALLS", "80"))
@@ -140,10 +142,14 @@ def check_domains(domain_candidates: Dict[str, List[str]]) -> Dict[str, List[Tup
                 cached = cache.get(d)
                 if cached is not None:
                     available, price, provider, error = cached
-                    results[name].append((d, DomainCheckResult(d, available, price, provider, error)))
+                    results[name].append(
+                        (d, DomainCheckResult(d, available, price, provider, error))
+                    )
                     continue
                 if calls_made >= max_calls_total:
-                    results[name].append((d, DomainCheckResult(d, None, None, "quota", "max_calls_reached")))
+                    results[name].append(
+                        (d, DomainCheckResult(d, None, None, "quota", "max_calls_reached"))
+                    )
                     continue
                 tasks.append((name, d, asyncio.create_task(_fetch_best(d))))
                 calls_made += 1

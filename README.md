@@ -49,11 +49,13 @@ DOMAINR_API_KEY=your_key_here
 ### CLI Commands
 
 **Generate domain ideas:**
+
 ```powershell
 python -m domainidom.cli brainstorm --idea "AI travel planner for families" --tlds com io ai
 ```
 
 **Research existing ideas:**
+
 ```powershell
 python -m domainidom.cli research --idea-file scope.md --tlds com net io --max 50 --out report.json
 ```
@@ -108,6 +110,7 @@ Key environment variables:
 ## 🤖 AI Agent Integration
 
 This project is designed for GitHub Copilot coding agents. See [AGENTS.md](AGENTS.md) for:
+
 - Setup instructions for autonomous agents
 - Task definitions and acceptance criteria  
 - Architecture roadmap (MVP → Multi-Agent → Production)

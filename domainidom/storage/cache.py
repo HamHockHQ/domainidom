@@ -26,7 +26,9 @@ class DomainCache:
             )
             conn.commit()
 
-    def get(self, domain: str) -> Optional[Tuple[Optional[bool], Optional[float], Optional[str], Optional[str]]]:
+    def get(
+        self, domain: str
+    ) -> Optional[Tuple[Optional[bool], Optional[float], Optional[str], Optional[str]]]:
         with sqlite3.connect(self.path) as conn:
             cur = conn.execute(
                 "SELECT available, price_usd, provider, error FROM domain_cache WHERE domain=?",
@@ -41,11 +43,21 @@ class DomainCache:
             error = row[3]
             return (available, price, provider, error)
 
-    def set(self, domain: str, data: Tuple[Optional[bool], Optional[float], Optional[str], Optional[str]]) -> None:
+    def set(
+        self,
+        domain: str,
+        data: Tuple[Optional[bool], Optional[float], Optional[str], Optional[str]],
+    ) -> None:
         available, price, provider, error = data
         with sqlite3.connect(self.path) as conn:
             conn.execute(
                 "REPLACE INTO domain_cache(domain, available, price_usd, provider, error) VALUES(?,?,?,?,?)",
-                (domain, None if available is None else int(bool(available)), price, provider, error),
+                (
+                    domain,
+                    None if available is None else int(bool(available)),
+                    price,
+                    provider,
+                    error,
+                ),
             )
             conn.commit()

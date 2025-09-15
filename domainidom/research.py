@@ -9,7 +9,7 @@ from .services.domain_check import check_domains as service_check_domains
 def _to_label(name: str) -> str:
     s = name.strip().lower()
     s = re.sub(r"^`+|`+$", "", s)
-    s = s.strip('"\' ,')  # strip quotes/commas if present
+    s = s.strip("\"' ,")  # strip quotes/commas if present
     s = re.sub(r"\s+", "-", s)
     s = re.sub(r"[^a-z0-9-]", "", s)
     s = re.sub(r"-+", "-", s).strip("-")

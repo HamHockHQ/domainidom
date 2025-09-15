@@ -13,23 +13,47 @@ def write_reports(scored: List[ScoredCandidate], out: Path) -> None:
     if out.suffix.lower() == ".csv":
         with out.open("w", newline="", encoding="utf-8") as f:
             w = csv.writer(f)
-            w.writerow(["name", "score", "length", "balance", "availability", "domain", "price_usd", "provider"]) 
+            w.writerow(
+                [
+                    "name",
+                    "score",
+                    "length",
+                    "balance",
+                    "availability",
+                    "domain",
+                    "price_usd",
+                    "provider",
+                ]
+            )
             for c in scored:
                 # Write a row per domain to include pricing
                 if c.domains:
                     for d in c.domains:
-                        w.writerow([
+                        w.writerow(
+                            [
+                                c.name,
+                                c.score,
+                                c.details.get("length"),
+                                c.details.get("balance"),
+                                c.details.get("availability"),
+                                d.domain,
+                                d.registrar_price_usd,
+                                d.provider,
+                            ]
+                        )
+                else:
+                    w.writerow(
+                        [
                             c.name,
                             c.score,
                             c.details.get("length"),
                             c.details.get("balance"),
                             c.details.get("availability"),
-                            d.domain,
-                            d.registrar_price_usd,
-                            d.provider,
-                        ])
-                else:
-                    w.writerow([c.name, c.score, c.details.get("length"), c.details.get("balance"), c.details.get("availability"), None, None, None])
+                            None,
+                            None,
+                            None,
+                        ]
+                    )
     else:
         data = [
             {

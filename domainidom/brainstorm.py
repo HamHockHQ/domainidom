@@ -10,7 +10,9 @@ DEFAULT_MAX = 50
 
 
 def _get_llm_base_url() -> str | None:
-    return os.getenv("OPENAI_BASE_URL") or os.getenv("LMSTUDIO_BASE_URL") or "http://127.0.0.1:1234/v1"
+    return (
+        os.getenv("OPENAI_BASE_URL") or os.getenv("LMSTUDIO_BASE_URL") or "http://127.0.0.1:1234/v1"
+    )
 
 
 def _get_llm_api_key() -> str | None:
@@ -21,11 +23,11 @@ def _get_llm_api_key() -> str | None:
 def _clean_name(s: str) -> str:
     s = s.strip()
     s = re.sub(r"^```[a-zA-Z]*\s*|```$", "", s)
-    s = s.strip().strip('"\' ,')
+    s = s.strip().strip("\"' ,")
     s = re.sub(r"^[-*\d\.\)\]]+\s*", "", s)
     s = s.strip()
     # Drop list bracket artifacts
-    if s in {"[", "]", "[", "]", "{" , "}"}:
+    if s in {"[", "]", "[", "]", "{", "}"}:
         return ""
     return s
 
@@ -62,8 +64,21 @@ def brainstorm_names(idea: str, max_candidates: int = DEFAULT_MAX) -> List[str]:
     except Exception:
         # Fallback: simple deterministic generation if no model server available
         base = [
-            "Nexora", "Brandora", "Aivanta", "Memora", "Rhymio", "Cleverly", "Fluxio", "Zenvia",
-            "Verveo", "Briofy", "Namewise", "Lumico", "Novara", "Vocalo", "Optimio",
+            "Nexora",
+            "Brandora",
+            "Aivanta",
+            "Memora",
+            "Rhymio",
+            "Cleverly",
+            "Fluxio",
+            "Zenvia",
+            "Verveo",
+            "Briofy",
+            "Namewise",
+            "Lumico",
+            "Novara",
+            "Vocalo",
+            "Optimio",
         ]
         return base[:max_candidates]
 
