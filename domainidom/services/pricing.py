@@ -9,21 +9,30 @@ import httpx
 
 from ..models import RegistrarPrice, PriceComparison
 
-# Configuration
-NAMECOM_API_USERNAME = os.getenv("NAME_COM_USERNAME") or os.getenv("name_com_DEV_USERNAME")
-NAMECOM_API_TOKEN = os.getenv("NAME_COM_API_KEY") or os.getenv("name_com_DEV_API_KEY")
+# Configuration - Base URLs (static)
 NAMECOM_BASE = os.getenv("NAME_COM_BASE", "https://api.dev.name.com/v4")
-
-GODADDY_API_KEY = os.getenv("GODADDY_API_KEY")
-GODADDY_API_SECRET = os.getenv("GODADDY_API_SECRET")
 GODADDY_BASE = "https://api.godaddy.com/v1"
-
-CLOUDFLARE_API_TOKEN = os.getenv("CLOUDFLARE_API_TOKEN")
 CLOUDFLARE_BASE = "https://api.cloudflare.com/client/v4"
-
-NAMECHEAP_API_USER = os.getenv("NAMECHEAP_API_USER")
-NAMECHEAP_API_KEY = os.getenv("NAMECHEAP_API_KEY")
 NAMECHEAP_BASE = "https://api.namecheap.com/xml.response"
+
+# Credential getters - read dynamically for test compatibility
+def _get_namecom_credentials():
+    """Get Name.com credentials dynamically."""
+    username = os.getenv("NAME_COM_USERNAME") or os.getenv("name_com_DEV_USERNAME")
+    token = os.getenv("NAME_COM_API_KEY") or os.getenv("name_com_DEV_API_KEY")
+    return username, token
+
+def _get_godaddy_credentials():
+    """Get GoDaddy credentials dynamically."""
+    return os.getenv("GODADDY_API_KEY"), os.getenv("GODADDY_API_SECRET")
+
+def _get_cloudflare_credentials():
+    """Get Cloudflare credentials dynamically."""
+    return os.getenv("CLOUDFLARE_API_TOKEN")
+
+def _get_namecheap_credentials():
+    """Get Namecheap credentials dynamically."""
+    return os.getenv("NAMECHEAP_API_USER"), os.getenv("NAMECHEAP_API_KEY")
 
 # Rate limiting per registrar
 REGISTRAR_RATE_LIMITS = {
@@ -64,7 +73,8 @@ rate_limiters = {name: RateLimiter(rps) for name, rps in REGISTRAR_RATE_LIMITS.i
 
 async def get_namecom_price(domain: str) -> RegistrarPrice:
     """Get pricing from Name.com API."""
-    if not _is_registrar_enabled("namecom") or not (NAMECOM_API_USERNAME and NAMECOM_API_TOKEN):
+    username, token = _get_namecom_credentials()
+    if not _is_registrar_enabled("namecom") or not (username and token):
         return RegistrarPrice("namecom", None, error="missing_credentials_or_disabled")
 
     await rate_limiters["namecom"].acquire()
@@ -74,7 +84,7 @@ async def get_namecom_price(domain: str) -> RegistrarPrice:
     try:
         async with httpx.AsyncClient(timeout=10) as client:
             resp = await client.post(
-                url, json=payload, auth=(NAMECOM_API_USERNAME, NAMECOM_API_TOKEN)
+                url, json=payload, auth=(username, token)
             )
             resp.raise_for_status()
             data = resp.json()
@@ -113,13 +123,14 @@ async def get_namecom_price(domain: str) -> RegistrarPrice:
 
 async def get_godaddy_price(domain: str) -> RegistrarPrice:
     """Get pricing from GoDaddy API."""
-    if not _is_registrar_enabled("godaddy") or not (GODADDY_API_KEY and GODADDY_API_SECRET):
+    api_key, api_secret = _get_godaddy_credentials()
+    if not _is_registrar_enabled("godaddy") or not (api_key and api_secret):
         return RegistrarPrice("godaddy", None, error="missing_credentials_or_disabled")
 
     await rate_limiters["godaddy"].acquire()
     url = f"{GODADDY_BASE}/domains/available"
     headers = {
-        "Authorization": f"sso-key {GODADDY_API_KEY}:{GODADDY_API_SECRET}",
+        "Authorization": f"sso-key {api_key}:{api_secret}",
         "Content-Type": "application/json",
     }
 
@@ -154,7 +165,8 @@ async def get_godaddy_price(domain: str) -> RegistrarPrice:
 
 async def get_cloudflare_price(domain: str) -> RegistrarPrice:
     """Get pricing from Cloudflare Registrar API."""
-    if not _is_registrar_enabled("cloudflare") or not CLOUDFLARE_API_TOKEN:
+    api_token = _get_cloudflare_credentials()
+    if not _is_registrar_enabled("cloudflare") or not api_token:
         return RegistrarPrice("cloudflare", None, error="missing_credentials_or_disabled")
 
     await rate_limiters["cloudflare"].acquire()
@@ -176,7 +188,8 @@ async def get_cloudflare_price(domain: str) -> RegistrarPrice:
 
 async def get_namecheap_price(domain: str) -> RegistrarPrice:
     """Get pricing from Namecheap API."""
-    if not _is_registrar_enabled("namecheap") or not (NAMECHEAP_API_USER and NAMECHEAP_API_KEY):
+    api_user, api_key = _get_namecheap_credentials()
+    if not _is_registrar_enabled("namecheap") or not (api_user and api_key):
         return RegistrarPrice("namecheap", None, error="missing_credentials_or_disabled")
 
     await rate_limiters["namecheap"].acquire()
@@ -184,9 +197,9 @@ async def get_namecheap_price(domain: str) -> RegistrarPrice:
     try:
         # Namecheap uses XML API - this is a simplified implementation
         params = {
-            "ApiUser": NAMECHEAP_API_USER,
-            "ApiKey": NAMECHEAP_API_KEY,
-            "UserName": NAMECHEAP_API_USER,
+            "ApiUser": api_user,
+            "ApiKey": api_key,
+            "UserName": api_user,
             "Command": "namecheap.domains.check",
             "ClientIp": "127.0.0.1",  # You'd need to get actual client IP
             "DomainList": domain,
