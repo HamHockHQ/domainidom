@@ -19,8 +19,9 @@ CACHE_PATH = os.getenv("DOMAIN_CACHE_PATH", "domain_cache.sqlite3")
 
 DOMAINR_BASE = "https://api.domainr.com/v2/status"
 
-# Enable multi-registrar pricing comparison
-ENABLE_MULTI_REGISTRAR = os.getenv("ENABLE_MULTI_REGISTRAR", "1") == "1"
+# Enable multi-registrar pricing comparison (read dynamically for tests)
+def is_multi_registrar_enabled() -> bool:
+    return os.getenv("ENABLE_MULTI_REGISTRAR", "1") == "1"
 
 
 @dataclass
@@ -121,7 +122,7 @@ async def _fetch_whoisxml(domain: str) -> ProviderResponse:
 async def _fetch_best(domain: str) -> ProviderResponse:
     """Fetch domain info with optional multi-registrar pricing comparison."""
     # If multi-registrar pricing is enabled, get comprehensive pricing data
-    if ENABLE_MULTI_REGISTRAR:
+    if is_multi_registrar_enabled():
         try:
             price_comparison = await get_multi_registrar_pricing(domain)
 
