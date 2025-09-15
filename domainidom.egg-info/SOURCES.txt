@@ -15,7 +15,9 @@ domainidom.egg-info/dependency_links.txt
 domainidom.egg-info/requires.txt
 domainidom.egg-info/top_level.txt
 domainidom/services/domain_check.py
+domainidom/services/pricing.py
 domainidom/storage/cache.py
 domainidom/utils/phonetics.py
 tests/test_domain_cache.py
+tests/test_domain_check_service_cache.py
 tests/test_phonetics.py
