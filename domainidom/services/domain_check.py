@@ -19,6 +19,7 @@ CACHE_PATH = os.getenv("DOMAIN_CACHE_PATH", "domain_cache.sqlite3")
 
 DOMAINR_BASE = "https://api.domainr.com/v2/status"
 
+
 # Enable multi-registrar pricing comparison (read dynamically for tests)
 def is_multi_registrar_enabled() -> bool:
     return os.getenv("ENABLE_MULTI_REGISTRAR", "1") == "1"
