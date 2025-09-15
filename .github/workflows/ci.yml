@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   test:
@@ -15,43 +15,43 @@ jobs:
         python-version: ["3.10", "3.11", "3.12"]
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
 
-    - name: Cache pip dependencies
-      uses: actions/cache@v3
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-${{ matrix.python-version }}-
-          ${{ runner.os }}-pip-
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-${{ matrix.python-version }}-
+            ${{ runner.os }}-pip-
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -e .
-        pip install pytest black ruff
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install -e .[dev]
 
-    - name: Code formatting check with black
-      run: |
-        black --check --diff .
+      - name: Code formatting check with black
+        run: |
+          black --check --diff .
 
-    - name: Linting with ruff
-      run: |
-        ruff check .
+      - name: Linting with ruff
+        run: |
+          ruff check .
 
-    - name: Run tests with pytest
-      run: |
-        pytest -q
-      env:
-        # Set environment variables for test API endpoints (use dev/mock by default)
-        NAMECOM_API_BASE: "https://api.dev.name.com/v4"
-        USE_WHOISXML_FOR_AVAIL: "0"
-        DOMAIN_CHECK_RPS: "3"
-        DOMAIN_CHECK_BURST: "5"
-        DOMAIN_CHECK_MAX_CALLS: "80"
+      - name: Run tests with pytest
+        run: |
+          pytest -q
+        env:
+          # Set environment variables for test API endpoints (use dev/mock by default)
+          NAMECOM_API_BASE: "https://api.dev.name.com/v4"
+          USE_WHOISXML_FOR_AVAIL: "0"
+          DOMAIN_CHECK_RPS: "3"
+          DOMAIN_CHECK_BURST: "5"
+          DOMAIN_CHECK_MAX_CALLS: "80"
