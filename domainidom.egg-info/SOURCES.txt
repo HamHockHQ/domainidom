@@ -20,6 +20,7 @@ domainidom/storage/cache.py
 domainidom/utils/phonetics.py
 tests/test_domain_cache.py
 tests/test_domain_check_service_cache.py
+tests/test_mcp_fastdomaincheck.py
 tests/test_multi_registrar_functional.py
 tests/test_multi_registrar_integration.py
 tests/test_multi_registrar_pricing.py
