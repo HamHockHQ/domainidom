@@ -9,7 +9,8 @@ from typing import Dict, List, Tuple
 import httpx
 
 from ..storage.cache import DomainCache
-from ..models import DomainCheckResult
+from ..models import DomainCheckResult, PriceComparison
+from .pricing import get_multi_registrar_pricing
 
 RATE_LIMIT_RPS = float(os.getenv("DOMAIN_CHECK_RPS", "3"))
 BURST = int(os.getenv("DOMAIN_CHECK_BURST", "5"))
@@ -18,6 +19,9 @@ CACHE_PATH = os.getenv("DOMAIN_CACHE_PATH", "domain_cache.sqlite3")
 
 DOMAINR_BASE = "https://api.domainr.com/v2/status"
 
+# Enable multi-registrar pricing comparison
+ENABLE_MULTI_REGISTRAR = os.getenv("ENABLE_MULTI_REGISTRAR", "1") == "1"
+
 
 @dataclass
 class ProviderResponse:
@@ -25,6 +29,7 @@ class ProviderResponse:
     price_usd: float | None
     provider: str
     error: str | None = None
+    price_comparison: PriceComparison | None = None
 
 
 class TokenBucket:
@@ -114,6 +119,36 @@ async def _fetch_whoisxml(domain: str) -> ProviderResponse:
 
 
 async def _fetch_best(domain: str) -> ProviderResponse:
+    """Fetch domain info with optional multi-registrar pricing comparison."""
+    # If multi-registrar pricing is enabled, get comprehensive pricing data
+    if ENABLE_MULTI_REGISTRAR:
+        try:
+            price_comparison = await get_multi_registrar_pricing(domain)
+            
+            # Determine availability from any registrar that provided data
+            available = None
+            best_price = None
+            primary_provider = "multi-registrar"
+            
+            for price in price_comparison.prices:
+                if price.is_available is not None:
+                    available = price.is_available
+                    primary_provider = price.registrar
+                    break
+            
+            if price_comparison.best_price:
+                best_price = price_comparison.best_price.price_usd
+            
+            return ProviderResponse(
+                available=available,
+                price_usd=best_price,
+                provider=primary_provider,
+                price_comparison=price_comparison
+            )
+        except Exception as e:
+            # Fall back to legacy behavior on error
+            pass
+    
     # Prioritize Name.com (dev) then Domainr; others stubbed
     res = await _fetch_namecom(domain)
     if res.available is not None:
@@ -164,6 +199,7 @@ def check_domains(
                 registrar_price_usd=resp.price_usd,
                 provider=resp.provider,
                 error=resp.error,
+                price_comparison=resp.price_comparison,
             )
             results.setdefault(name, []).append((domain, dcr))
             cache.set(domain, (dcr.available, dcr.registrar_price_usd, dcr.provider, dcr.error))
