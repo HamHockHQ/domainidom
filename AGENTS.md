@@ -116,39 +116,51 @@ pytest -q
   - Exponential backoff: 0.5s, 1.0s, 2.0s
 - Respect per-provider usage limits; batch with MCP when configured.
 
-## Tasks for Copilot Coding Agent (Initial)
+## Current Status (September 2025)
 
-1) Scaffold Python project
+**✅ MVP (v0.1) COMPLETED**
+- Full Python project scaffold with `pyproject.toml`, dependencies, tests
+- Complete package structure: `api.py`, `cli.py`, `brainstorm.py`, `research.py`, `analyze.py`, `package.py`, `models.py`
+- Services: `domain_check.py` (Name.com, Domainr), `pricing.py`, caching layer
+- Utils: `phonetics.py` (Double Metaphone), scoring algorithms  
+- Tests: Comprehensive coverage, all passing (`pytest -q`)
+- GitHub repository: https://github.com/HamHockHQ/domainidom
 
-- Create `pyproject.toml` (FastAPI, Typer, pydantic, uvicorn, pytest, black, ruff; optional agency-swarm)
-- Create package `domainidom/` with submodules: `api.py`, `cli.py`, `brainstorm.py`, `research.py`, `analyze.py`, `package.py`, `models.py`, `services/domain_check.py`, `services/pricing.py`, `utils/phonetics.py`, `storage/cache.py`
-- Add `tests/` covering `utils/phonetics.py` and `services/domain_check.py` caching
-- Add `.gitignore` and basic `README.md`
-- Add `examples/scope.md` sample input
+**✅ Validation Checklist**
+- `pytest -q` passes ✅
+- `uvicorn domainidom.api:app --reload` starts and serves `/healthz` ✅
+- CLI commands work: `python -m domainidom.cli brainstorm` ✅
+- Domain research pipeline functional ✅
+- Reports generated in `./reports/` ✅
 
-Acceptance criteria:
+## Tasks for Copilot Coding Agent (Next Phase)
 
-- `pytest -q` passes
-- `uvicorn domainidom.api:app --reload` starts and serves `/healthz`
-- CLI commands run without crashing (even with stubbed API calls)
+**Current GitHub Issues (Ready for Assignment):**
 
-1) Implement MVP pipeline
+1. **Issue #2**: Add GitHub Actions CI workflow for automated testing and linting
+   - Priority: HIGH (enables validation for all future PRs)  
+   - Complexity: LOW (standard CI setup)
+   - Dependencies: None
 
-- Implement `brainstorm.py` with a provider-agnostic LLM wrapper (supports `OPENAI_API_KEY` and `OPENAI_BASE_URL`)
-- Implement `services/domain_check.py` with a pluggable interface; include stub provider and Domainr/Name.com adapters (use env vars)
-- Implement simple scoring in `analyze.py` (length, vowel-consonant balance, double metaphone similarity)
-- Implement `package.py` to produce ranked JSON/CSV reports
+2. **Issue #4**: Add multi-registrar pricing comparison system  
+   - Priority: MEDIUM (enhances pricing coverage)
+   - Complexity: MEDIUM (API integrations)
+   - Dependencies: None (extends existing pricing service)
 
-Acceptance criteria:
+3. **Issue #1**: Add MCP FastDomainCheck integration for bulk domain availability
+   - Priority: MEDIUM (performance enhancement)  
+   - Complexity: MEDIUM (new MCP client integration)
+   - Dependencies: None (pluggable provider model)
 
-- `python -m domainidom.cli brainstorm --idea "..."` returns 20+ unique names
-- `research` command checks availability for 3+ TLDs and annotates with pricing if keys present; gracefully degrades without keys
-- Report written to `./reports/<timestamp>.{json,csv}`
+4. **Issue #3**: Implement Agency Swarm multi-agent orchestration system
+   - Priority: LOW (v0.2 feature, major enhancement)
+   - Complexity: HIGH (multi-agent coordination)  
+   - Dependencies: Issues #1 (MCP integration provides foundation)
 
-1) Optional: Add MCP FastDomainCheck client
-
-- Add adapter using MCP client to batch availability queries
-- Gate on env/config; skip tests if not configured
+**Recommended Assignment Order:**
+- Issues #2 + #4 in parallel (independent)
+- Issue #1 after #2/#4 complete  
+- Issue #3 last (depends on #1 for optimal agent coordination)
 
 ## PR Instructions
 

@@ -1,5 +1,133 @@
 # domainidom
 
+AI-powered domain name research and analysis tool that generates memorable brand names, checks availability across TLDs, and provides market insights.
+
+## 🚀 Features
+
+- **LLM-powered name generation** with fallback deterministic methods
+- **Multi-provider domain availability checking** (Name.com, Domainr)
+- **Intelligent scoring algorithms** (phonetics, memorability, SEO potential)
+- **Rate limiting and caching** to respect API limits
+- **Comprehensive reporting** (JSON, CSV formats)
+- **CLI and FastAPI interfaces** for flexible usage
+
+## 📋 Quick Start
+
+### Prerequisites
+
+- Python 3.10+
+- Optional: LM Studio running locally for LLM features
+
+### Installation (Windows PowerShell)
+
+```powershell
+# Clone and setup
+git clone https://github.com/HamHockHQ/domainidom.git
+cd domainidom
+python -m venv .venv; .\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -e .
+```
+
+### Configuration
+
+Copy `.env.example` to `.env` and configure:
+
+```bash
+# Required for LLM features
+OPENAI_API_KEY=your_key_here
+# OR use local LM Studio:
+OPENAI_BASE_URL=http://127.0.0.1:1234/v1
+
+# Optional: Enhanced domain checking
+NAME_COM_API_KEY=your_key_here
+DOMAINR_API_KEY=your_key_here
+```
+
+## 🖥️ Usage
+
+### CLI Commands
+
+**Generate domain ideas:**
+```powershell
+python -m domainidom.cli brainstorm --idea "AI travel planner for families" --tlds com io ai
+```
+
+**Research existing ideas:**
+```powershell
+python -m domainidom.cli research --idea-file scope.md --tlds com net io --max 50 --out report.json
+```
+
+### API Server
+
+```powershell
+uvicorn domainidom.api:app --reload
+```
+
+Visit `http://localhost:8000/docs` for interactive API documentation.
+
+## 🧪 Testing
+
+```powershell
+pytest -q  # Quick test run
+pytest -v  # Verbose output
+```
+
+## 📁 Project Structure
+
+```text
+domainidom/
+├── domainidom/           # Main package
+│   ├── api.py           # FastAPI server
+│   ├── cli.py           # CLI interface  
+│   ├── brainstorm.py    # Name generation
+│   ├── research.py      # Domain research
+│   ├── analyze.py       # Scoring algorithms
+│   ├── package.py       # Report generation
+│   ├── models.py        # Data models
+│   ├── services/        # External integrations
+│   ├── storage/         # Caching layer
+│   └── utils/           # Helper functions
+├── tests/               # Test suite
+├── examples/            # Sample inputs
+└── reports/             # Generated reports
+```
+
+## 🔧 Configuration
+
+Key environment variables:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `OPENAI_API_KEY` | - | OpenAI API key for LLM features |
+| `OPENAI_BASE_URL` | OpenAI API | Custom LLM endpoint (e.g., LM Studio) |
+| `NAME_COM_API_KEY` | - | Name.com API for pricing |
+| `DOMAIN_CHECK_RPS` | 3 | Rate limit (requests per second) |
+| `DOMAIN_CHECK_MAX_CALLS` | 80 | Max domain checks per run |
+
+## 🤖 AI Agent Integration
+
+This project is designed for GitHub Copilot coding agents. See [AGENTS.md](AGENTS.md) for:
+- Setup instructions for autonomous agents
+- Task definitions and acceptance criteria  
+- Architecture roadmap (MVP → Multi-Agent → Production)
+
+## 📊 Roadmap
+
+- ✅ **MVP (v0.1)**: Core pipeline with CLI/API
+- 🔄 **v0.2**: Multi-agent orchestration with Agency Swarm
+- 🔮 **v1.0**: Production features, UI, extended integrations
+
+## 🔗 Links
+
+- **Repository**: [HamHockHQ/domainidom](https://github.com/HamHockHQ/domainidom)
+- **Issues**: Track progress and request features
+- **Discussions**: Community Q&A and ideas
+
+## 📄 License
+
+MIT License - see LICENSE file for details.
+
 Domain and brand name ideation, availability research, and packaging.
 
 ## Quick start (Windows PowerShell)
