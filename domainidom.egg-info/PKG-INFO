@@ -15,6 +15,7 @@ Requires-Dist: metaphone~=0.6
 Requires-Dist: python-Levenshtein~=0.25
 Provides-Extra: dev
 Requires-Dist: pytest~=8.3; extra == "dev"
+Requires-Dist: pytest-asyncio~=0.24; extra == "dev"
 Requires-Dist: black~=24.10; extra == "dev"
 Requires-Dist: ruff~=0.6; extra == "dev"
 
