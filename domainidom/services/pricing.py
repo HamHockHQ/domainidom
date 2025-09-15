@@ -150,7 +150,8 @@ async def get_godaddy_price(domain: str) -> RegistrarPrice:
             if price and isinstance(price, dict):
                 price = float(price.get("amount", 0)) / 1_000_000  # Convert from micros
             elif price:
-                price = float(price)
+                # GoDaddy price is typically in micros (even when it's a plain number)
+                price = float(price) / 1_000_000
 
             return RegistrarPrice(
                 registrar="godaddy",
