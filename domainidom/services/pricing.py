@@ -158,7 +158,7 @@ async def get_cloudflare_price(domain: str) -> RegistrarPrice:
         return RegistrarPrice("cloudflare", None, error="missing_credentials_or_disabled")
 
     await rate_limiters["cloudflare"].acquire()
-    
+
     try:
         # Note: Cloudflare's registrar API is limited and may not provide direct availability checking
         # This is a simplified implementation - in practice, you'd need to check their actual API docs

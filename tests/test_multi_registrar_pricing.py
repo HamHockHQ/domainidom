@@ -227,7 +227,6 @@ class TestMultiRegistrarPricing:
             patch("domainidom.services.pricing.get_cloudflare_price") as mock_cloudflare,
             patch("domainidom.services.pricing.get_namecheap_price") as mock_namecheap,
         ):
-
             mock_namecom.return_value = RegistrarPrice("namecom", 15.99, "USD", True)
             mock_godaddy.return_value = RegistrarPrice("godaddy", 12.99, "USD", True)
             mock_cloudflare.return_value = RegistrarPrice("cloudflare", None, error="not_available")
@@ -274,7 +273,6 @@ class TestMultiRegistrarPricing:
             patch("domainidom.services.pricing.get_namecom_price") as mock_namecom,
             patch("domainidom.services.pricing.get_godaddy_price") as mock_godaddy,
         ):
-
             mock_namecom.return_value = RegistrarPrice("namecom", 15.99, "USD", True)
             mock_godaddy.return_value = RegistrarPrice("godaddy", 12.99, "USD", True)
 
