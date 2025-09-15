@@ -15,6 +15,7 @@ GODADDY_BASE = "https://api.godaddy.com/v1"
 CLOUDFLARE_BASE = "https://api.cloudflare.com/client/v4"
 NAMECHEAP_BASE = "https://api.namecheap.com/xml.response"
 
+
 # Credential getters - read dynamically for test compatibility
 def _get_namecom_credentials():
     """Get Name.com credentials dynamically."""
@@ -22,17 +23,21 @@ def _get_namecom_credentials():
     token = os.getenv("NAME_COM_API_KEY") or os.getenv("name_com_DEV_API_KEY")
     return username, token
 
+
 def _get_godaddy_credentials():
     """Get GoDaddy credentials dynamically."""
     return os.getenv("GODADDY_API_KEY"), os.getenv("GODADDY_API_SECRET")
+
 
 def _get_cloudflare_credentials():
     """Get Cloudflare credentials dynamically."""
     return os.getenv("CLOUDFLARE_API_TOKEN")
 
+
 def _get_namecheap_credentials():
     """Get Namecheap credentials dynamically."""
     return os.getenv("NAMECHEAP_API_USER"), os.getenv("NAMECHEAP_API_KEY")
+
 
 # Rate limiting per registrar
 REGISTRAR_RATE_LIMITS = {
