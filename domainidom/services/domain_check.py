@@ -125,7 +125,7 @@ async def _fetch_best(domain: str) -> ProviderResponse:
 
 
 def check_domains(
-    domain_candidates: Dict[str, List[str]]
+    domain_candidates: Dict[str, List[str]],
 ) -> Dict[str, List[Tuple[str, DomainCheckResult]]]:
     cache_path = os.getenv("DOMAIN_CACHE_PATH", "domain_cache.sqlite3")
     cache = DomainCache(cache_path)
