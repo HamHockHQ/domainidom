@@ -88,9 +88,7 @@ async def get_namecom_price(domain: str) -> RegistrarPrice:
 
     try:
         async with httpx.AsyncClient(timeout=10) as client:
-            resp = await client.post(
-                url, json=payload, auth=(username, token)
-            )
+            resp = await client.post(url, json=payload, auth=(username, token))
             resp.raise_for_status()
             data = resp.json()
             item = data.get("results", [{}])[0]
