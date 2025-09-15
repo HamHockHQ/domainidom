@@ -1,12 +1,18 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 import time
 from dataclasses import dataclass
 from typing import Dict, List, Tuple
 
-import httpx
+# Import httpx only when available
+try:
+    import httpx
+    HTTPX_AVAILABLE = True
+except ImportError:
+    HTTPX_AVAILABLE = False
 
 from ..storage.cache import DomainCache
 from ..models import DomainCheckResult, PriceComparison
@@ -19,10 +25,18 @@ CACHE_PATH = os.getenv("DOMAIN_CACHE_PATH", "domain_cache.sqlite3")
 
 DOMAINR_BASE = "https://api.domainr.com/v2/status"
 
+# MCP FastDomainCheck configuration
+MCP_BATCH_SIZE = int(os.getenv("MCP_BATCH_SIZE", "20"))
+
 
 # Enable multi-registrar pricing comparison (read dynamically for tests)
 def is_multi_registrar_enabled() -> bool:
     return os.getenv("ENABLE_MULTI_REGISTRAR", "1") == "1"
+
+
+# Enable MCP FastDomainCheck integration
+def is_mcp_fastdomaincheck_enabled() -> bool:
+    return os.getenv("MCP_FASTDOMAINCHECK_ENABLED", "0") == "1"
 
 
 @dataclass
@@ -56,7 +70,138 @@ class TokenBucket:
 bucket = TokenBucket(RATE_LIMIT_RPS, BURST)
 
 
+@dataclass
+class MCPBatchRequest:
+    """MCP FastDomainCheck batch request format."""
+    domains: List[str]
+    include_pricing: bool = False
+
+
+@dataclass 
+class MCPDomainResult:
+    """MCP FastDomainCheck domain result format."""
+    domain: str
+    available: bool | None
+    price_usd: float | None = None
+    error: str | None = None
+
+
+@dataclass
+class MCPBatchResponse:
+    """MCP FastDomainCheck batch response format."""
+    results: List[MCPDomainResult]
+    provider: str = "mcp-fastdomaincheck"
+
+
+class MCPFastDomainCheckClient:
+    """Mock MCP FastDomainCheck client for bulk domain availability."""
+    
+    def __init__(self):
+        self.endpoint = os.getenv("MCP_FASTDOMAINCHECK_ENDPOINT", "http://localhost:8080/v1/domains/check")
+        self.api_key = os.getenv("MCP_FASTDOMAINCHECK_API_KEY")
+        self.timeout = float(os.getenv("MCP_FASTDOMAINCHECK_TIMEOUT", "30"))
+        
+    async def check_domains_batch(self, domains: List[str]) -> MCPBatchResponse:
+        """Check domain availability in batch via MCP FastDomainCheck."""
+        if not HTTPX_AVAILABLE:
+            # Return stub response when httpx not available
+            return MCPBatchResponse([
+                MCPDomainResult(domain, None, None, "httpx_not_available") for domain in domains
+            ])
+            
+        if not self.api_key:
+            # Return stub response when API key not configured
+            return MCPBatchResponse([
+                MCPDomainResult(domain, None, None, "missing_api_key") for domain in domains
+            ])
+            
+        # Split into batches of configured size
+        batch_size = min(MCP_BATCH_SIZE, len(domains))
+        if len(domains) > batch_size:
+            domains = domains[:batch_size]
+            
+        request_data = MCPBatchRequest(domains=domains, include_pricing=True)
+        
+        for backoff in [0] + RETRY_BACKOFF:
+            try:
+                if backoff:
+                    await asyncio.sleep(backoff)
+                    
+                async with httpx.AsyncClient(timeout=self.timeout) as client:
+                    await bucket.acquire()
+                    response = await client.post(
+                        self.endpoint,
+                        json={
+                            "domains": request_data.domains,
+                            "include_pricing": request_data.include_pricing
+                        },
+                        headers={
+                            "Authorization": f"Bearer {self.api_key}",
+                            "Content-Type": "application/json"
+                        }
+                    )
+                    response.raise_for_status()
+                    data = response.json()
+                    
+                    # Parse MCP response format
+                    results = []
+                    for item in data.get("results", []):
+                        results.append(MCPDomainResult(
+                            domain=item.get("domain", ""),
+                            available=item.get("available"),
+                            price_usd=item.get("price_usd"),
+                            error=item.get("error")
+                        ))
+                    
+                    return MCPBatchResponse(results=results)
+                    
+            except Exception as e:
+                if backoff == RETRY_BACKOFF[-1]:  # Last retry
+                    # Return error responses for all domains on final failure
+                    return MCPBatchResponse([
+                        MCPDomainResult(domain, None, None, f"mcp_error: {str(e)}")
+                        for domain in domains
+                    ])
+                continue
+                
+        # Fallback response
+        return MCPBatchResponse([
+            MCPDomainResult(domain, None, None, "mcp_timeout") for domain in domains
+        ])
+
+
+async def _fetch_mcp_fastdomaincheck(domains: List[str]) -> List[ProviderResponse]:
+    """Fetch domain availability via MCP FastDomainCheck in batch."""
+    if not is_mcp_fastdomaincheck_enabled():
+        return [ProviderResponse(None, None, "stub", "mcp_disabled") for _ in domains]
+        
+    try:
+        client = MCPFastDomainCheckClient()
+        batch_response = await client.check_domains_batch(domains)
+        
+        responses = []
+        for result in batch_response.results:
+            responses.append(ProviderResponse(
+                available=result.available,
+                price_usd=result.price_usd,
+                provider="mcp-fastdomaincheck",
+                error=result.error
+            ))
+            
+        # Ensure we return the same number of responses as domains requested
+        while len(responses) < len(domains):
+            responses.append(ProviderResponse(None, None, "mcp-fastdomaincheck", "missing_result"))
+            
+        return responses[:len(domains)]
+        
+    except Exception as e:
+        return [ProviderResponse(None, None, "mcp-fastdomaincheck", f"batch_error: {str(e)}") for _ in domains]
+
+
 async def _fetch_namecom(domain: str) -> ProviderResponse:
+    if not HTTPX_AVAILABLE:
+        return ProviderResponse(None, None, "stub", "httpx_not_available")
+        
     NAMECOM_API_USERNAME = os.getenv("NAME_COM_USERNAME") or os.getenv("name_com_DEV_USERNAME")
     NAMECOM_API_TOKEN = os.getenv("NAME_COM_API_KEY") or os.getenv("name_com_DEV_API_KEY")
     NAMECOM_BASE = os.getenv("NAME_COM_BASE", "https://api.dev.name.com/v4")
@@ -88,6 +233,9 @@ async def _fetch_namecom(domain: str) -> ProviderResponse:
 
 
 async def _fetch_domainr(domain: str) -> ProviderResponse:
+    if not HTTPX_AVAILABLE:
+        return ProviderResponse(None, None, "stub", "httpx_not_available")
+        
     DOMAINR_API_KEY = os.getenv("DOMAINR_API_KEY")
     if not DOMAINR_API_KEY:
         return ProviderResponse(None, None, "stub", "missing_domainr_key")
@@ -151,7 +299,13 @@ async def _fetch_best(domain: str) -> ProviderResponse:
             # Fall back to legacy behavior on error
             pass
 
-    # Prioritize Name.com (dev) then Domainr; others stubbed
+    # Prioritize MCP FastDomainCheck (if enabled), then Name.com (dev), then Domainr; others stubbed
+    if is_mcp_fastdomaincheck_enabled():
+        # For single domain, use batch endpoint with single domain
+        mcp_responses = await _fetch_mcp_fastdomaincheck([domain])
+        if mcp_responses and mcp_responses[0].available is not None:
+            return mcp_responses[0]
+    
     res = await _fetch_namecom(domain)
     if res.available is not None:
         return res
@@ -172,7 +326,11 @@ def check_domains(
     async def _run() -> Dict[str, List[Tuple[str, DomainCheckResult]]]:
         nonlocal calls_made
         results: Dict[str, List[Tuple[str, DomainCheckResult]]] = {}
-        tasks: List[Tuple[str, str, asyncio.Task[ProviderResponse]]] = []
+        
+        # Track domains that need checking (not in cache)
+        domains_to_check: List[Tuple[str, str]] = []  # (name, domain) pairs
+        
+        # First pass: handle cached domains and collect uncached ones
         for name, domains in domain_candidates.items():
             results[name] = []
             for d in domains:
@@ -188,23 +346,72 @@ def check_domains(
                         (d, DomainCheckResult(d, None, None, "quota", "max_calls_reached"))
                     )
                     continue
-                tasks.append((name, d, asyncio.create_task(_fetch_best(d))))
+                domains_to_check.append((name, d))
                 calls_made += 1
-        for name, domain, task in tasks:
+
+        # If MCP is enabled and we have domains to check, use batch processing
+        if is_mcp_fastdomaincheck_enabled() and domains_to_check:
+            # Extract just the domain names for batch processing
+            batch_domains = [domain for _, domain in domains_to_check]
+            
             try:
-                resp = await task
+                # Process in batches
+                batch_size = MCP_BATCH_SIZE
+                for i in range(0, len(batch_domains), batch_size):
+                    batch = batch_domains[i:i + batch_size]
+                    batch_responses = await _fetch_mcp_fastdomaincheck(batch)
+                    
+                    # Map responses back to results
+                    for j, resp in enumerate(batch_responses):
+                        if i + j < len(domains_to_check):
+                            name, domain = domains_to_check[i + j]
+                            dcr = DomainCheckResult(
+                                domain=domain,
+                                available=resp.available,
+                                registrar_price_usd=resp.price_usd,
+                                provider=resp.provider,
+                                error=resp.error,
+                                price_comparison=resp.price_comparison,
+                            )
+                            results.setdefault(name, []).append((domain, dcr))
+                            cache.set(domain, (dcr.available, dcr.registrar_price_usd, dcr.provider, dcr.error))
+                            
             except Exception as e:
-                resp = ProviderResponse(None, None, "error", str(e))
-            dcr = DomainCheckResult(
-                domain=domain,
-                available=resp.available,
-                registrar_price_usd=resp.price_usd,
-                provider=resp.provider,
-                error=resp.error,
-                price_comparison=resp.price_comparison,
-            )
-            results.setdefault(name, []).append((domain, dcr))
-            cache.set(domain, (dcr.available, dcr.registrar_price_usd, dcr.provider, dcr.error))
+                # Fallback to individual processing if batch fails
+                for name, domain in domains_to_check:
+                    resp = ProviderResponse(None, None, "mcp-fastdomaincheck", f"batch_fallback_error: {str(e)}")
+                    dcr = DomainCheckResult(
+                        domain=domain,
+                        available=resp.available,
+                        registrar_price_usd=resp.price_usd,
+                        provider=resp.provider,
+                        error=resp.error,
+                        price_comparison=resp.price_comparison,
+                    )
+                    results.setdefault(name, []).append((domain, dcr))
+                    cache.set(domain, (dcr.available, dcr.registrar_price_usd, dcr.provider, dcr.error))
+        else:
+            # Traditional individual processing
+            tasks: List[Tuple[str, str, asyncio.Task[ProviderResponse]]] = []
+            for name, domain in domains_to_check:
+                tasks.append((name, domain, asyncio.create_task(_fetch_best(domain))))
+                
+            for name, domain, task in tasks:
+                try:
+                    resp = await task
+                except Exception as e:
+                    resp = ProviderResponse(None, None, "error", str(e))
+                dcr = DomainCheckResult(
+                    domain=domain,
+                    available=resp.available,
+                    registrar_price_usd=resp.price_usd,
+                    provider=resp.provider,
+                    error=resp.error,
+                    price_comparison=resp.price_comparison,
+                )
+                results.setdefault(name, []).append((domain, dcr))
+                cache.set(domain, (dcr.available, dcr.registrar_price_usd, dcr.provider, dcr.error))
+                
         return results
 
     return asyncio.run(_run())

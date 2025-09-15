@@ -5,7 +5,12 @@ import os
 from typing import Optional
 import time
 
-import httpx
+# Import httpx only when available
+try:
+    import httpx
+    HTTPX_AVAILABLE = True
+except ImportError:
+    HTTPX_AVAILABLE = False
 
 from ..models import RegistrarPrice, PriceComparison
 
@@ -236,6 +241,12 @@ async def get_namecheap_price(domain: str) -> RegistrarPrice:
 
 async def get_multi_registrar_pricing(domain: str) -> PriceComparison:
     """Get pricing from all enabled registrars in parallel."""
+    if not HTTPX_AVAILABLE:
+        # Return stub pricing when httpx not available
+        return PriceComparison(domain, [
+            RegistrarPrice("stub", None, error="httpx_not_available")
+        ])
+        
     tasks = []
 
     if _is_registrar_enabled("namecom"):
