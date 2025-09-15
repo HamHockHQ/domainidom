@@ -1,6 +1,5 @@
 """Functional tests for multi-registrar pricing system."""
 
-import pytest
 import tempfile
 import os
 from pathlib import Path

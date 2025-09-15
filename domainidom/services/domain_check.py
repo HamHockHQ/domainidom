@@ -145,7 +145,7 @@ async def _fetch_best(domain: str) -> ProviderResponse:
                 provider=primary_provider,
                 price_comparison=price_comparison,
             )
-        except Exception as e:
+        except Exception:
             # Fall back to legacy behavior on error
             pass
 

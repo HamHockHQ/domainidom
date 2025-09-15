@@ -1,6 +1,5 @@
 """Integration tests for multi-registrar pricing with domain checking."""
 
-import pytest
 import tempfile
 from unittest.mock import patch, Mock
 from domainidom.models import PriceComparison, RegistrarPrice

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import os
-from typing import List, Optional, Dict, Any
+from typing import Optional
 import time
 
 import httpx
@@ -158,23 +158,18 @@ async def get_cloudflare_price(domain: str) -> RegistrarPrice:
         return RegistrarPrice("cloudflare", None, error="missing_credentials_or_disabled")
 
     await rate_limiters["cloudflare"].acquire()
-    headers = {
-        "Authorization": f"Bearer {CLOUDFLARE_API_TOKEN}",
-        "Content-Type": "application/json",
-    }
-
+    
     try:
         # Note: Cloudflare's registrar API is limited and may not provide direct availability checking
         # This is a simplified implementation - in practice, you'd need to check their actual API docs
-        async with httpx.AsyncClient(timeout=10) as client:
-            # Cloudflare typically charges at-cost pricing, but availability checking is limited
-            # For now, return a stub implementation
-            return RegistrarPrice(
-                registrar="cloudflare",
-                price_usd=None,
-                error="api_not_publicly_available",
-                registration_url=f"https://dash.cloudflare.com/registrar",
-            )
+        # Cloudflare typically charges at-cost pricing, but availability checking is limited
+        # For now, return a stub implementation
+        return RegistrarPrice(
+            registrar="cloudflare",
+            price_usd=None,
+            error="api_not_publicly_available",
+            registration_url="https://dash.cloudflare.com/registrar",
+        )
     except Exception as e:
         return RegistrarPrice("cloudflare", None, error=str(e))
 

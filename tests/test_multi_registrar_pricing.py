@@ -1,7 +1,6 @@
 """Tests for multi-registrar pricing system."""
 
 import pytest
-import asyncio
 import time
 from unittest.mock import AsyncMock, patch, Mock
 from domainidom.models import RegistrarPrice, PriceComparison
