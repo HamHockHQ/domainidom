@@ -124,31 +124,31 @@ async def _fetch_best(domain: str) -> ProviderResponse:
     if ENABLE_MULTI_REGISTRAR:
         try:
             price_comparison = await get_multi_registrar_pricing(domain)
-            
+
             # Determine availability from any registrar that provided data
             available = None
             best_price = None
             primary_provider = "multi-registrar"
-            
+
             for price in price_comparison.prices:
                 if price.is_available is not None:
                     available = price.is_available
                     primary_provider = price.registrar
                     break
-            
+
             if price_comparison.best_price:
                 best_price = price_comparison.best_price.price_usd
-            
+
             return ProviderResponse(
                 available=available,
                 price_usd=best_price,
                 provider=primary_provider,
-                price_comparison=price_comparison
+                price_comparison=price_comparison,
             )
         except Exception as e:
             # Fall back to legacy behavior on error
             pass
-    
+
     # Prioritize Name.com (dev) then Domainr; others stubbed
     res = await _fetch_namecom(domain)
     if res.available is not None:

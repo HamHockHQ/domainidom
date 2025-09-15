@@ -22,6 +22,7 @@ class NameCandidate:
 @dataclass
 class RegistrarPrice:
     """Price information from a specific registrar."""
+
     registrar: str
     price_usd: Optional[float]
     currency: str = "USD"
@@ -35,14 +36,17 @@ class RegistrarPrice:
 @dataclass
 class PriceComparison:
     """Comparison of prices across multiple registrars."""
+
     domain: str
     prices: List[RegistrarPrice]
     best_price: Optional[RegistrarPrice] = None
-    
+
     def __post_init__(self):
         """Calculate the best price after initialization."""
         if not self.best_price and self.prices:
-            available_prices = [p for p in self.prices if p.price_usd is not None and p.is_available]
+            available_prices = [
+                p for p in self.prices if p.price_usd is not None and p.is_available
+            ]
             if available_prices:
                 self.best_price = min(available_prices, key=lambda p: p.price_usd)
 
