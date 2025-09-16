@@ -118,7 +118,7 @@ pytest -q
 
 ## Current Status (September 2025)
 
-**✅ MVP (v0.1) COMPLETED**
+### ✅ MVP (v0.1) COMPLETED
 
 - Full Python project scaffold with `pyproject.toml`, dependencies, tests
 - Complete package structure: `api.py`, `cli.py`, `brainstorm.py`, `research.py`, `analyze.py`, `package.py`, `models.py`
@@ -127,7 +127,7 @@ pytest -q
 - Tests: Comprehensive coverage, all passing (`pytest -q`)
 - GitHub repository: <https://github.com/HamHockHQ/domainidom>
 
-**✅ Validation Checklist**
+### ✅ Validation Checklist
 
 - `pytest -q` passes ✅
 - `uvicorn domainidom.api:app --reload` starts and serves `/healthz` ✅
@@ -135,39 +135,76 @@ pytest -q
 - Domain research pipeline functional ✅
 - Reports generated in `./reports/` ✅
 
+### ✅ COMPLETED FEATURES (September 2025)
+
+**Issue #2**: GitHub Actions CI workflow ✅ **MERGED** (PR #5)
+
+- Multi-version testing (Python 3.10-3.12)
+- Automated formatting validation with Black/ruff
+- Comprehensive test execution with pytest
+
+**Issue #4**: Multi-registrar pricing comparison ✅ **MERGED** (PR #6)  
+
+- Support for Name.com, GoDaddy, Cloudflare, Namecheap
+- Parallel pricing queries with rate limiting
+- Enhanced JSON/CSV reports with price comparisons
+
+**Issue #1**: MCP FastDomainCheck integration ✅ **MERGED** (PR #7)
+
+- Bulk domain availability checking via MCP
+- Configurable batch processing (default: 20 domains)
+- Graceful fallback to existing providers
+
 ## Tasks for Copilot Coding Agent (Next Phase)
 
-**Current GitHub Issues (Ready for Assignment):**
+**Remaining GitHub Issues (Ready for Assignment):**
 
-1. **Issue #2**: Add GitHub Actions CI workflow for automated testing and linting
-   - Priority: HIGH (enables validation for all future PRs)  
-   - Complexity: LOW (standard CI setup)
-   - Dependencies: None
-
-2. **Issue #4**: Add multi-registrar pricing comparison system  
-   - Priority: MEDIUM (enhances pricing coverage)
-   - Complexity: MEDIUM (API integrations)
-   - Dependencies: None (extends existing pricing service)
-
-3. **Issue #1**: Add MCP FastDomainCheck integration for bulk domain availability
-   - Priority: MEDIUM (performance enhancement)  
-   - Complexity: MEDIUM (new MCP client integration)
-   - Dependencies: None (pluggable provider model)
-
-4. **Issue #3**: Implement Agency Swarm multi-agent orchestration system
-   - Priority: LOW (v0.2 feature, major enhancement)
-   - Complexity: HIGH (multi-agent coordination)  
-   - Dependencies: Issues #1 (MCP integration provides foundation)
-
-**Recommended Assignment Order:**
-
-- Issues #2 + #4 in parallel (independent)
-- Issue #1 after #2/#4 complete  
-- Issue #3 last (depends on #1 for optimal agent coordination)
+- **Issue #3**: Implement Agency Swarm multi-agent orchestration system
+  - Priority: HIGH (v0.2 milestone feature)
+  - Complexity: HIGH (multi-agent coordination)  
+  - Dependencies: All foundational work complete ✅
 
 ## PR Instructions
 
 - Branches must start with `copilot/` when opened by GitHub Copilot
+
+- Ensure `pytest -q` is green; format with black; lint with ruff
+
+- Keep changes focused and minimal; update tests as needed
+
+## Copilot PR Formatting & CI Fix Pattern
+
+**Known Issue**: Copilot-generated PRs consistently fail CI with identical Black/ruff formatting violations.
+
+**Proven Fix Pattern** (apply immediately when CI fails with formatting errors):
+
+1. **Switch to failing branch**:
+
+   ```powershell
+   git fetch; git switch [failing-branch-name]
+   ```
+
+2. **Apply formatting fixes**:
+
+   ```powershell
+   python -m black .
+   python -m ruff check --fix
+   ```
+
+3. **Commit and push fixes**:
+
+   ```powershell
+   git add .; git commit -m "fix: Apply black and ruff formatting fixes"; git push
+   ```
+
+**Expected Results**:
+
+- Black: "reformatted X files, Y files left unchanged"
+- Ruff: "Found N errors (N fixed, 0 remaining)"
+- New CI run triggers automatically and passes
+
+**When to Use**: Any Copilot PR failing with "would be reformatted by black" or ruff linting errors.
+
 - Ensure `pytest -q` is green; format with black; lint with ruff
 - Keep changes focused and minimal; update tests as needed
 
